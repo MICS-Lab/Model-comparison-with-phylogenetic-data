@@ -7,12 +7,12 @@ using Distances, Phylo
     using Distributions  
 using Base.Threads
 
-include("/gpfs/workdir/brunom/manual_smc/smc_onestep.jl")
+include("smc_onestep.jl")
 
 
 # df=CSV.read("/gpfs/workdir/brunom/SMC_newmodel/LTTGH3.csv", DataFrame)
 # data= [df.Mutations .*19, df.Linages]
-path = "/gpfs/workdir/brunom/input/snv_patient2.csv"
+path = "data/snv_patient2.csv"
 dat, header = readdlm(path, ';', header=true)
 df = DataFrame(dat, vec(header))
 M= Matrix(df)
@@ -55,17 +55,16 @@ j=findfirst(x== 2 for x in data[2])
 Tmax=height_m[j] 
 Tmin=height_m[j-2]
 dataCF=0.2924528302
-#dataCF=0.062042253899716765
 N      = 10^5
 k      = 13
 L      = 63.0
 l      = h/L
 N_points = 2000
-LTT_threshold= 39.380348305423425
-CF_threshold=  0.18937968332168406
-current_step=16
+LTT_threshold= 1000.0
+CF_threshold=  1.0
+current_step=1
 sigma=perturbation(sqrt( 0.00025637314111458113),sqrt(14.945000250125064),sqrt(0.0005661795780182818),sqrt(18.562703695062464),0.022925129378516713,0.023481790751736727,sqrt( 18.94125864450353))
-file = "manual_smc/ET2_GH/ET2GH_normalized_step_$(current_step -1).csv"
+file = "ET2_normalized_step_$(current_step -1).csv"
 #n_threads = nthreads()
 n_threads =250
 nsample= N_points /n_threads 

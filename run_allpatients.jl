@@ -7,8 +7,8 @@ using Distances, Phylo
     using Distributions  
 using Base.Threads
 
-include("/gpfs/workdir/brunom/manual_smc/distance_comparison/smc_onestep_distances.jl")
-include("/gpfs/workdir/brunom/manual_smc/all_patients/smc_onsestep_allpatients.jl")
+include("smc_onestep_distances.jl")
+include("smc_onsestep_allpatients.jl")
 
 mutable struct patient
     name::String
@@ -24,7 +24,7 @@ end
 
 patient_data= Vector{patient}()
 
-path = "/gpfs/workdir/brunom/input/snv_patient2.csv"
+path = "data/snv_patient2.csv"
 dat, header = readdlm(path, ';', header=true)
 df = DataFrame(dat, vec(header))
 M= Matrix(df)
@@ -66,7 +66,7 @@ data=[height_m,mutated_m .- 21]
 
 push!(patient_data,patient("ET2",data,0.2924528302,13,63.0,h/63.0,67.24000641074481,0.23820230187999994,perturbation(sqrt(0.001643877433970934),sqrt(21.448242564696788),sqrt(0.001988933814458091),sqrt(29.599241148980106),sqrt( 2.9950877430014804e-5),sqrt(2.0739300080941974e-5),sqrt(16.512809057499606))))
 
-path = "/gpfs/workdir/brunom/snv_patient1.csv"
+path = "data/snv_patient1.csv"
 dat, header = readdlm(path, ';', header=true)
 df = DataFrame(dat, vec(header))
 M= Matrix(df)
@@ -108,7 +108,7 @@ data=[height_m,mutated_m .- 19]
 
 push!(patient_data,patient("ET1",data,0.212195122,22,34.0,h/34.0,34.88999696440589,0.15546507320000003,perturbation(sqrt(0.008942605496302358),sqrt(5.586333148605302),sqrt(0.002982488997571501),sqrt(21.895172152435034),0.014198428650927778,0.014720154409003037,sqrt(6.812729318810887))))
 
-file_path = "/gpfs/workdir/brunom/PD7271.csv"
+file_path = "data/PD7271.csv"
 data,header= readdlm(file_path,',',header=true)
 df = DataFrame(data,vec(header))
 M=Matrix(df)
@@ -168,7 +168,8 @@ push!(height,h)
 data=[height,mut]
 
 push!(patient_data,patient("PD7271",data,0.2435897436,19,23.0,h/23.0,33.86080915514873,0.09273425639999999,perturbation(0.0036741332695204446,sqrt(1.3520738240381551),sqrt(0.007327567487932949),sqrt(6.422829614440439),sqrt(5.272540337987596e-6),sqrt(4.125216793550615e-6),sqrt(0.379735107227027))))
-path = "/gpfs/workdir/brunom/PD5163.csv"
+
+path = "data/PD5163.csv"
 data,header= readdlm(path,',',header=true)
 df = DataFrame(data,vec(header))
 M=Matrix(df)
@@ -230,11 +231,11 @@ data=[height,mut]
 push!(patient_data,patient("PD5163",data,0.08571428571,6,37.0,h/37.0,47.056476683633626,0.29507571429000007,perturbation(0.00559410837441695,sqrt(6.901595042571415),sqrt(0.004727797449326753),sqrt(8.292500223736122),0.0009794862166547344,0.0010383183163624743,sqrt(5.785017924811733))))
 n_threads = 300
 nsamples=6 #must be a multiple of n_models
-current_step=12
+current_step=1
 n_models=3
 npatients=4
 N=10^5
-file="/gpfs/workdir/brunom/manual_smc/all_patients/ALL_normalized_step_$(current_step -1).csv"
+file="ALL_normalized_step_$(current_step -1).csv"
 # @time one_step_allpatients(1,file,nsamples,patient_data, current_step, n_models,npatients,N)
 # @threads for i in 1:n_threads
 #     task_id = i

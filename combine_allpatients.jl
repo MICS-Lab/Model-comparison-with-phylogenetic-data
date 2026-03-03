@@ -3,7 +3,7 @@ using Distances
 
 
 # ---------------- PARAMETERS ----------------
-current_step = 12
+current_step = 1
 nfiles = 305
 npatients =4
 
@@ -35,17 +35,9 @@ function read_previous_step(step_number, n_threads, file_pattern)
     return df
 end
 
-# ---------------- READ THREAD FILES ----------------
-# df1 = read_previous_step(current_step, nfiles, 
-#                         "/gpfs/workdir/brunom/manual_smc/all_patients/prova/all_patients_steb$(current_step)_INDEX.csv")
 
-# # Read second set of files (change the pattern to match your new files)
-# df2 = read_previous_step(current_step, nfiles, 
-#                         "/gpfs/workdir/brunom/manual_smc/all_patients/prova/all_patients_step$(current_step)_INDEX.csv")
-
-# df = vcat(df1, df2)
- df = read_previous_step(current_step, nfiles,
-                         "/gpfs/workdir/brunom/manual_smc/all_patients/prova/all_patients_step$(current_step)_INDEX.csv")
+df = read_previous_step(current_step, nfiles,
+                         "all_patients_step$(current_step)_INDEX.csv")
 
 println("Total merged rows: ", nrow(df))
 

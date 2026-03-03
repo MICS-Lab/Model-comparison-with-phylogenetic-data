@@ -6,18 +6,18 @@ using Distances, Phylo
     using Random
     using Distributions  
 
-include("/gpfs/workdir/brunom/input/prove_dev.jl")
-include("/gpfs/workdir/brunom/input/population_model_modif.jl")
-include("/gpfs/workdir/brunom/input/ABCmethod.jl")
-include("/gpfs/workdir/brunom/input/modelVE.jl")
-include("/gpfs/workdir/brunom/input/cellSimulation.jl")
+include("input/prove_dev.jl")
+include("input/population_model_modif.jl")
+include("input/ABCmethod.jl")
+include("input/modelVE.jl")
+include("input/cellSimulation.jl")
 
 
 
 
 function one_step_allpatients(n, file, nsample, patient_data, current_step, n_models, npatients, N)
     df = current_step != 1 ? CSV.read(file, DataFrame) : DataFrame()
-    new_file = "/gpfs/workdir/brunom/manual_smc/all_patients/prova/all_patients_step$(current_step)_$n.csv"
+    new_file = "all_patients_step$(current_step)_$n.csv"
 
     # Pre-allocate reusable buffers
     patient_params = Vector{Any}(undef, npatients)  # ← Reused across samples
@@ -29,13 +29,13 @@ function one_step_allpatients(n, file, nsample, patient_data, current_step, n_mo
     end
 
     open(new_file, "w") do io
-        println(io, "p2,p0,Tm,model,dist,CFd,weight,patient")
-        println("running")
+        # println(io, "p2,p0,Tm,model,dist,CFd,weight,patient")
+        # println("running")
 
         for i in 1:nsample
             while true
-                #model_choice = current_step == 1 ? mod(i - 1, n_models) + 1 : rand(1:n_models)
-                model_choice = current_step == 1 ? mod(i - 1, n_models) + 1 : rand([1, 3])
+                model_choice = current_step == 1 ? mod(i - 1, n_models) + 1 : rand(1:n_models)
+                #model_choice = current_step == 1 ? mod(i - 1, n_models) + 1 : rand([1, 3])
                 all_pass = true
 
                 # Reuse patient_params and results

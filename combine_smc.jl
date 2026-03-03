@@ -10,7 +10,7 @@ using Glob
 N_points = 600
 LTT_threshold = 1000
 CF_threshold = 1.0
-current_step = 12
+current_step = 1
 nfiles = 20
 
 function read_previous_step(step_number, n_threads, file_pattern)
@@ -47,7 +47,7 @@ end
 
 # Read first set of files
 df1 = read_previous_step(current_step, 260, 
-                         "/gpfs/workdir/brunom/manual_smc/PD7271_W/PD5163_step_$(current_step)_INDEX.csv")
+                         "PD5163_step_$(current_step)_INDEX.csv")
 
 # Read second set of files (change the pattern to match your new files)
 # df2 = read_previous_step(current_step, 25, 
@@ -85,7 +85,7 @@ df = normalize_weights_by_model!(df)
 println("Total rows: ", nrow(df))
 
 # Write to file
-CSV.write("/gpfs/workdir/brunom/manual_smc/PD5163_W/PD5163Wbis_normalized_step_$(current_step).csv", df, 
+CSV.write("PD5163_normalized_step_$(current_step).csv", df, 
           writeheader=true,
           delim=',')
 

@@ -7,10 +7,10 @@ using Distances, Phylo
     using Distributions  
 using Base.Threads
 
-include("/gpfs/workdir/brunom/manual_smc/distance_comparison/smc_onestep_distances.jl")
+include("smc_onestep_distances.jl")
 
 
-df=CSV.read("/gpfs/workdir/brunom/manual_smc/distance_comparison/LTTW.csv", DataFrame)
+df=CSV.read("LTTW.csv", DataFrame)
 data= [df.Mutations , df.Linages]
 
 dataCF=0.6867665841781752

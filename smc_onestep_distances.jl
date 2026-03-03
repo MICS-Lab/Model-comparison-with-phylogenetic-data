@@ -6,11 +6,11 @@ using Distances, Phylo
     using Random
     using Distributions  
 
-include("/gpfs/workdir/brunom/input/prove_dev.jl")
-include("/gpfs/workdir/brunom/input/population_model_modif.jl")
-include("/gpfs/workdir/brunom/input/ABCmethod.jl")
-include("/gpfs/workdir/brunom/input/modelVE.jl")
-include("/gpfs/workdir/brunom/input/cellSimulation.jl")
+include("input/prove_dev.jl")
+include("input/population_model_modif.jl")
+include("input/ABCmethod.jl")
+include("input/modelVE.jl")
+include("input/cellSimulation.jl")
 
 mutable struct point 
     p2::Float64
@@ -35,17 +35,16 @@ end
         else
             df=[]
         end
-        new_file = "manual_smc/distance_comparison/combinedW/$(name)_step_$(current_step)_$n.csv" 
+        new_file = "$(name)_step_$(current_step)_$n.csv" 
         println("job n $n started")
         open(new_file, "w") do io
             for i in 1:nsample 
                     while true 
-                        # if current_step == 1
-                        #     model_choice = mod(i - 1, n_models) + 1
-                        # else
-                        #     model_choice = rand(1:n_models)
-                        # end 
-                        model_choice = 2
+                        if current_step == 1
+                            model_choice = mod(i - 1, n_models) + 1
+                        else
+                            model_choice = rand(1:n_models)
+                        end 
                         #println("sampled model: $model_choice")
                         x = sample_parameter(df, model_choice, current_step,L,sigma)
                         # println(io, "$(x.p2),$(x.p0),$(x.T_m),$model_choice,sampled")

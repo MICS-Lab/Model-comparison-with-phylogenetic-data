@@ -7,10 +7,10 @@ using Distances, Phylo
     using Distributions  
 using Base.Threads
 
-include("/gpfs/workdir/brunom/manual_smc/smc_onestep.jl")
+include("/smc_onestep.jl")
 
 
-path = "/gpfs/workdir/brunom/PD5163.csv"
+path = "data/PD5163.csv"
 data,header= readdlm(path,',',header=true)
 df = DataFrame(data,vec(header))
 M=Matrix(df)
@@ -75,11 +75,11 @@ dataCF=0.08571428571
 N      = 10^5
 k      = 6
 N_points = 2000
-LTT_threshold= 55.347622666666645
-CF_threshold=0.7036465229698678
-current_step=11
+LTT_threshold= 1000.0
+CF_threshold=1.0
+current_step=1
 sigma=perturbation(sqrt(0.009248382416246365),sqrt(5.540760130065033),sqrt(0.0011367290715874044),sqrt(6.650424990910675),0.015513744228198664,0.016026444395609983,sqrt(6.096229408931873))
-file = "manual_smc/PD5163_W/PD5163Wbis_normalized_step_$(current_step -1).csv"
+file = "PD5163_normalized_step_$(current_step -1).csv"
 #n_threads = nthreads()
 n_threads =250
 nsample= N_points /n_threads 
