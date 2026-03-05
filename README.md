@@ -12,5 +12,6 @@ To run a single model ABC-SMC, it is sufficient to change the model sampling in 
 
 The script `run_allpatients.jl` is made to run model selection for the whole dataset for one step, then the results for one step across threads can be combined with `combine_allpatients.jl`.
 
+The notebook `tree_simulation.ipynb` contains examples to simulate clonal dynamics and phylogenetic trees for the three models. It has been used to simulate and obtain synthetic datasets with specific parameters. 
 
 
