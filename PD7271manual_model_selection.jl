@@ -67,7 +67,7 @@ end
 push!(mut,m)
 push!(height,h)
 data=[height,mut]
-dataCF=0.2435897436
+dataCF=0.2159090909
 N      = 10^5
 k      = 19
 L      = 23.0
