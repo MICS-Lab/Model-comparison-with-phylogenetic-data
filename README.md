@@ -2,7 +2,7 @@
 
 This repository contains all the scripts to build phylogenetic trees from genotype matrices and to run ABC-SMC and ABC-SMC model selection for the four patients presented. 
 
-In the folder [data](data/), there are the genotype matrices for the four patients in the form of CSV files. 
+The data in the form of genotype matrices (.CSV files) should be put in the folder [data](data/). 
 The [input](input/) folder contains scripts to simulate the three models and to generate Lineage Through Time (LTT) plots and Clonal Fraction (CF) for the simulated tree. All these files are necessary to run the inference algorithm.
 In particular, the script `cellSimulation.jl` contains all the functions to build the exact and approximated genealogical tree from the model of _Hermange et al._, and it has been used to perform all the numerical analysis to assess the quality of the approximation. 
 
