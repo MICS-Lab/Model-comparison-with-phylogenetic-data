@@ -153,7 +153,19 @@ function remove_node_and_cleanup!(hsc::cellSimulation, node::Cell)
         end
     end
 end
-
+function to_newick_genealogy(root::Cell, T)
+    function rec(node::Cell)
+        ch = node.children
+        if isempty(ch)
+            return "$(node.id):$(T - node.tBirth)"          # leaf lives until sampling
+        end
+        t_div = ch[1].tBirth                                  # division time = children's birth
+        @assert all(c -> c.tBirth == t_div, ch)               # sanity check
+        sub = join((rec(c) for c in ch), ",")
+        return "($sub)$(node.id):$(t_div - node.tBirth)"      # edge = this cell's lifetime
+    end
+    return rec(root) * ";"
+end
 function to_newick_with_node_age(root::Cell)
     # Recursive helper function to construct the Newick string
     function recurse_tree(node::Cell, parent_height)
@@ -203,7 +215,8 @@ function tree_simulation(parameters, patientAge,status,maxpop,k)
         CF=final_pop/(final_pop+N)
         n=collect(values(hsc.nodes))
         root=n[findfirst(x -> x.parent === nothing,n)]
-        nw_string=to_newick_with_node_age(root)
+        #nw_string=to_newick_with_node_age(root)
+        nw_string=to_newick_genealogy(root, patientAge)
         tree=parsenewick(nw_string)
         t=subsample_mutated_tree(hsc,tree,k)
         LTT=LTT_plot(t, 1.0, 60.0, 0.0)
