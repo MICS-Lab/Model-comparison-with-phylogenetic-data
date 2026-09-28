@@ -92,6 +92,13 @@ end
     model.state.results = Dict("LTT" => [(model.T_m .+ l_result[1][1] ./ 365) .* l, l_result[1][2]], "CF" => l_result[2])
     return nothing
 end
+@everywhere m_half(x) = min(x, 1 - x)
+
+# u = p0 / m(p2), guarded against m(p2) = 0 (a measure-zero event)
+@everywhere function u_from(p2, p0)
+    mp = m_half(p2)
+    return mp > 0 ? clamp(p0 / mp, 0.0, 1.0) : 0.0
+end
 
 @everywhere function perturbation_kernel(model::VEmodel, p2, p0, T_m, L)
     sample = 0
@@ -125,97 +132,117 @@ end
     return model.s, 0, model.T_m
 end
 
-@everywhere function perturbation_kernel(model::GHmodel, p2, p0, T_m, L; max_iterations=100)
-    # Sample T_m with bounded attempts
-    sample = -1
-    attempts = 0
-    while (sample < 0 || sample > L) && attempts < max_iterations
-        sample = rand(Normal(T_m, model.state.sigmaT))
-        attempts += 1
-    end
+# @everywhere function perturbation_kernel(model::GHmodel, p2, p0, T_m, L; max_iterations=100)
+#     # Sample T_m with bounded attempts
+#     sample = -1
+#     attempts = 0
+#     while (sample < 0 || sample > L) && attempts < max_iterations
+#         sample = rand(Normal(T_m, model.state.sigmaT))
+#         attempts += 1
+#     end
     
-    # Fallback: clamp to valid range if sampling fails
-    if sample < 0 || sample > L
-        sample = clamp(T_m + randn() * model.state.sigmaT, 0, L)
-    end
-    model.T_m = sample
+#     # Fallback: clamp to valid range if sampling fails
+#     if sample < 0 || sample > L
+#         sample = clamp(T_m + randn() * model.state.sigmaT, 0, L)
+#     end
+#     model.T_m = sample
     
-    # Sample p2 and p0 jointly with bounded attempts
-    valid_sample = false
-    new_p2, new_p0 = p2, p0
-    joint_attempts = 0
+#     # Sample p2 and p0 jointly with bounded attempts
+#     valid_sample = false
+#     new_p2, new_p0 = p2, p0
+#     joint_attempts = 0
     
-    while !valid_sample && joint_attempts < max_iterations
-        # Sample p2 with bounded attempts
-        sample_p2 = -1
-        p2_attempts = 0
-        p2_lower = max(0.001, p2 - model.state.sigmas)
-        p2_upper = min(1, p2 + model.state.sigmas)
+#     while !valid_sample && joint_attempts < max_iterations
+#         # Sample p2 with bounded attempts
+#         sample_p2 = -1
+#         p2_attempts = 0
+#         p2_lower = max(0.001, p2 - model.state.sigmas)
+        # p2_upper = min(1, p2 + model.state.sigmas)
         
-        # Check if p2 sampling range is valid
-        if p2_lower > p2_upper
-            sample_p2 = clamp(p2, 0.001, 1)
-        else
-            while (sample_p2 < 0.001 || sample_p2 > 1) && p2_attempts < max_iterations
-                sample_p2 = rand(Uniform(p2_lower, p2_upper))
-                p2_attempts += 1
-            end
-            # Fallback for p2
-            if sample_p2 < 0.001 || sample_p2 > 1
-                sample_p2 = clamp(p2, 0.001, 1)
-            end
-        end
+        # # Check if p2 sampling range is valid
+        # if p2_lower > p2_upper
+        #     sample_p2 = clamp(p2, 0.001, 1)
+        # else
+        #     while (sample_p2 < 0.001 || sample_p2 > 1) && p2_attempts < max_iterations
+        #         sample_p2 = rand(Uniform(p2_lower, p2_upper))
+        #         p2_attempts += 1
+        #     end
+        #     # Fallback for p2
+        #     if sample_p2 < 0.001 || sample_p2 > 1
+        #         sample_p2 = clamp(p2, 0.001, 1)
+        #     end
+        # end
         
-        # Sample p0 with bounded attempts
-        sample_p0 = -1
-        p0_attempts = 0
-        p0_lower = max(0.001, p0 - model.state.sigmap0)
-        p0_upper = min(sample_p2, p0 + model.state.sigmap0)
+        # # Sample p0 with bounded attempts
+        # sample_p0 = -1
+        # p0_attempts = 0
+        # p0_lower = max(0.001, p0 - model.state.sigmap0)
+        # p0_upper = min(sample_p2, p0 + model.state.sigmap0)
         
-        # Check if p0 sampling range is valid
-        if p0_lower > p0_upper
-            sample_p0 = clamp(p0, 0.001, sample_p2)
-        else
-            while (sample_p0 < 0.001 || sample_p0 > sample_p2) && p0_attempts < max_iterations
-                sample_p0 = rand(Uniform(p0_lower, p0_upper))
-                p0_attempts += 1
-            end
-            # Fallback for p0
-            if sample_p0 < 0.001 || sample_p0 > sample_p2
-                sample_p0 = clamp(p0, 0.001, sample_p2)
-            end
-        end
+        # # Check if p0 sampling range is valid
+        # if p0_lower > p0_upper
+        #     sample_p0 = clamp(p0, 0.001, sample_p2)
+        # else
+        #     while (sample_p0 < 0.001 || sample_p0 > sample_p2) && p0_attempts < max_iterations
+        #         sample_p0 = rand(Uniform(p0_lower, p0_upper))
+        #         p0_attempts += 1
+        #     end
+        #     # Fallback for p0
+        #     if sample_p0 < 0.001 || sample_p0 > sample_p2
+        #         sample_p0 = clamp(p0, 0.001, sample_p2)
+        #     end
+        # end
         
-        # Check if joint constraint is satisfied
-        if sample_p2 + sample_p0 < 1
-            new_p2, new_p0 = sample_p2, sample_p0
-            valid_sample = true
-        else
-            # Try to adjust to satisfy constraint
-            total = sample_p2 + sample_p0
-            if total >= 1
-                # Scale down proportionally
-                scale_factor = 0.99 / total
-                sample_p2 *= scale_factor
-                sample_p0 *= scale_factor
-                new_p2, new_p0 = sample_p2, sample_p0
-                valid_sample = true
-            end
-        end
+        # # Check if joint constraint is satisfied
+        # if sample_p2 + sample_p0 < 1
+        #     new_p2, new_p0 = sample_p2, sample_p0
+        #     valid_sample = true
+        # else
+        #     # Try to adjust to satisfy constraint
+        #     total = sample_p2 + sample_p0
+        #     if total >= 1
+        #         # Scale down proportionally
+        #         scale_factor = 0.99 / total
+        #         sample_p2 *= scale_factor
+        #         sample_p0 *= scale_factor
+        #         new_p2, new_p0 = sample_p2, sample_p0
+#                 valid_sample = true
+#             end
+#         end
         
-        joint_attempts += 1
-    end
+#         joint_attempts += 1
+#     end
     
-    # Final fallback: use clamped original values
-    if !valid_sample
-        new_p2 = clamp(p2, 0.001, 1)
-        new_p0 = clamp(p0, 0.001, min(new_p2, 1 - new_p2))
-        @warn "Perturbation kernel failed to find valid sample after $max_iterations attempts, using fallback values"
-    end
+#     # Final fallback: use clamped original values
+#     if !valid_sample
+#         new_p2 = clamp(p2, 0.001, 1)
+#         new_p0 = clamp(p0, 0.001, min(new_p2, 1 - new_p2))
+#         @warn "Perturbation kernel failed to find valid sample after $max_iterations attempts, using fallback values"
+#     end
     
-    model.p2 = new_p2
-    model.p0 = new_p0
+#     model.p2 = new_p2
+#     model.p0 = new_p0
     
+#     return model.p2, model.p0, model.T_m
+# end
+
+@everywhere function perturbation_kernel(model::GHmodel, p2, p0, T_m, L)
+    σ2 = model.state.sigmas
+    σu = model.state.sigmau
+    σT = model.state.sigmaT
+
+    # T: exact truncated normal, no rejection loop needed
+    model.T_m = rand(truncated(Normal(T_m, σT), 0, L))
+
+    # p2
+    p2_new = rand(Uniform(max(0.0, p2 - σ2), min(1.0, p2 + σ2)))
+
+    # u (computed from the parent particle)
+    u_j   = u_from(p2, p0)
+    u_new = rand(Uniform(max(0.0, u_j - σu), min(1.0, u_j + σu)))
+
+    model.p2 = p2_new
+    model.p0 = u_new * m_half(p2_new)   # p0 + p2 ≤ 1 by construction
     return model.p2, model.p0, model.T_m
 end
 
@@ -231,14 +258,23 @@ end
     return model.s, 0, model.T_m
 end
 
-@everywhere function sample_prior(model::GHmodel, L)  # Added L parameter
-    # d=clamp(rand(Normal(0.017,0.0039)),0,1)
-    # q= clamp(1 .-rand(Exponential(0.092)),0,1)
-    # model.p2 = clamp(d/(1-q),0,1)
-    # model.p0 = clamp(q*d/(1-q),0,min(model.p2, 1 - model.p2)) 
-    model.p2 = rand()
-    model.p0=rand()* min(model.p2, 1 - model.p2)  
+# @everywhere function sample_prior(model::GHmodel, L)  # Added L parameter
+#     # d=clamp(rand(Normal(0.017,0.0039)),0,1)
+#     # q= clamp(1 .-rand(Exponential(0.092)),0,1)
+#     # model.p2 = clamp(d/(1-q),0,1)
+#     # model.p0 = clamp(q*d/(1-q),0,min(model.p2, 1 - model.p2)) 
+#     model.p2 = rand()
+#     model.p0=rand()* min(model.p2, 1 - model.p2)  
+#     model.T_m = rand(Uniform(0, L))
+#     return model.p2, model.p0, model.T_m
+# end
+@everywhere function sample_prior(model::GHmodel, L)
+    p2 = rand()
+    u  = rand()
+    model.p2  = p2
+    model.p0  = u * m_half(p2)
     model.T_m = rand(Uniform(0, L))
+    # p1 = 1 - p2 - p0 is automatically ≥ 0 since p0 ≤ 1 - p2
     return model.p2, model.p0, model.T_m
 end
 
@@ -291,35 +327,61 @@ end
     return wt
 end
 
-@everywhere function calculate_weight(model::GHmodel, pd::prob_distribution, L, t, b,new_p2,new_p0,new_T)
-    if t == 1
-        wt = b
-    else 
-        su = 0.0
-        for i in 1:pd.points
-            if pd.model[i] == model.state.id
-                try
-                    # weight_contrib = pd.weight[i] *
-                    # pdf(Truncated(Uniform(pd.p2[i] - model.state.sigmas, pd.p2[i] + model.state.sigmas), 0, 1),model.p2)*
-                    # pdf(Truncated(Uniform(pd.p0[i] - model.state.sigmas, pd.p0[i] + model.state.sigmas), 0,1),model.p0)*
-                    #     pdf(Truncated(Normal(pd.T[i], model.state.sigmaT),0,L),model.T_m)
-                    weight_contrib = pd.weight[i] *
-                    pdf(Truncated(Uniform(pd.p2[i] - model.state.sigmas, pd.p2[i] + model.state.sigmas), 0, 1),new_p2)*
-                    pdf(Truncated(Uniform(pd.p0[i] - model.state.sigmap0, pd.p0[i] + model.state.sigmap0), 0,1),new_p0)*
-                        pdf(Truncated(Normal(pd.T[i], model.state.sigmaT),0,L),new_T)
-                    su += weight_contrib
-                catch e
-                    println("Numerical issue in weight calculation: ", e)
-                    continue
-                end
-            end
-        end 
+# @everywhere function calculate_weight(model::GHmodel, pd::prob_distribution, L, t, b,new_p2,new_p0,new_T)
+#     if t == 1
+#         wt = b
+#     else 
+#         su = 0.0
+#         for i in 1:pd.points
+#             if pd.model[i] == model.state.id
+#                 try
+#                     # weight_contrib = pd.weight[i] *
+#                     # pdf(Truncated(Uniform(pd.p2[i] - model.state.sigmas, pd.p2[i] + model.state.sigmas), 0, 1),model.p2)*
+#                     # pdf(Truncated(Uniform(pd.p0[i] - model.state.sigmas, pd.p0[i] + model.state.sigmas), 0,1),model.p0)*
+#                     #     pdf(Truncated(Normal(pd.T[i], model.state.sigmaT),0,L),model.T_m)
+#                     weight_contrib = pd.weight[i] *
+#                     pdf(Truncated(Uniform(pd.p2[i] - model.state.sigmas, pd.p2[i] + model.state.sigmas), 0, 1),new_p2)*
+#                     pdf(Truncated(Uniform(pd.p0[i] - model.state.sigmap0, pd.p0[i] + model.state.sigmap0), 0,1),new_p0)*
+#                         pdf(Truncated(Normal(pd.T[i], model.state.sigmaT),0,L),new_T)
+#                     su += weight_contrib
+#                 catch e
+#                     println("Numerical issue in weight calculation: ", e)
+#                     continue
+#                 end
+#             end
+#         end 
         
-        prior = L / 2
-        #wt = su > 0 ? b * prior / su : 0.0
-        wt = b * prior / su
+#         prior = L / 2
+#         #wt = su > 0 ? b * prior / su : 0.0
+#         wt = b * prior / su
+#     end
+#     return wt
+# end
+@everywhere function calculate_weight(model::GHmodel, pd::prob_distribution, L, t, b,
+                                      new_p2, new_p0, new_T)
+    t == 1 && return b
+
+    σ2 = model.state.sigmas
+    σu = model.state.sigmau
+    σT = model.state.sigmaT
+
+    su = 0.0
+    for i in 1:pd.points
+        pd.model[i] == model.state.id || continue
+        su += pd.weight[i] *
+              kernel_density(new_p2, new_p0, new_T,
+                             pd.p2[i], pd.p0[i], pd.T[i],
+                             σ2, σu, σT, L)
     end
-    return wt
+
+    # Prior density in (p2, u, T): U(0,1) × U(0,1) × U(0,L) = 1/L
+    prior = 1 / L
+
+    if su <= 0
+        @warn "Zero kernel mass for new particle (model $(model.state.id)); weight set to 0"
+        return 0.0
+    end
+    return b * prior / su
 end
 
 
