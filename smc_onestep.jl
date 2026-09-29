@@ -64,10 +64,9 @@ function one_step_threaded(n, file, data, dataCF, nsample, N, k, L, l, LTT_thres
                            current_step, n_models, sigma, name)
     if current_step != 1
         df = CSV.read(file, DataFrame)
-        # σ_u is a deterministic function of the previous population, so every job
-        # computes the same value, and it stays fixed for proposal AND weighting.
-        sig = with_sigma_u(sigma, compute_sigma_u(df))
-        n == 1 && println("step $current_step: σ_u = $(sig.sigma3u)")
+        
+        sig = compute_sigma(df)
+        n == 1 && println("step $current_step: σ = $sig")
     else
         df = []
         sig = sigma
