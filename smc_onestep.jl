@@ -264,3 +264,18 @@ function calculate_weight(x, model_choice, current_step, L, df, sigma)
     end
     return wt
 end
+
+
+
+emp_sd(df, model, col) = std(df[df.model .== model, col])
+
+function compute_sigma(df)
+    mask3 = df.model .== 3
+    us = u_from.(df.p2[mask3], df.p0[mask3])
+    perturbation(
+        emp_sd(df, 1, :p2),  emp_sd(df, 1, :T_m),   # model 1
+        emp_sd(df, 2, :p2),  emp_sd(df, 2, :T_m),   # model 2
+        emp_sd(df, 3, :p2),                         # model 3: σ₂
+        max(SIGMA_U_MIN, std(us)),                  # model 3: σ_u (your formula)
+        emp_sd(df, 3, :T_m))                        # model 3: σ_T
+end
