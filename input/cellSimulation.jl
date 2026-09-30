@@ -47,6 +47,11 @@ function run_simulation(parameters, patientAge,status,maxpop)
         #total_propensity = prop_sym  + prop_diff + prop_asym
         total_propensity = hsc.alpha * hsc.totalpop
         τ = -log(rand()) / total_propensity
+        if hsc.currentTime + τ > hsc.endTime
+            hsc.currentTime = hsc.endTime
+            push!(hsc.trajectory, (hsc.currentTime, hsc.totalpop))
+            break
+        end
         hsc.currentTime += τ
         #r = rand() * total_propensity
         r = rand()
